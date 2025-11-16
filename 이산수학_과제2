@@ -1,0 +1,197 @@
+# 관계 행렬 입력 기능
+
+N = 5
+
+def input_matrix():
+    print("5×5 관계 행렬을 입력하세요 (0 또는 1):")
+    R = []
+    for _ in range(N):
+        row = list(map(int, input().split()))
+        R.append(row)
+    return R
+
+# 관계 성질 판별 기능 (반사, 대칭, 추이)
+
+def is_reflexive(R):
+    return all(R[i][i] == 1 for i in range(N))
+
+def is_symmetric(R):
+    return all(R[i][j] == R[j][i] for i in range(N) for j in range(N))
+
+def is_transitive(R):
+    for i in range(N):
+        for j in range(N):
+            if R[i][j] == 1:
+                for k in range(N):
+                    if R[j][k] == 1 and R[i][k] == 0:
+                        return False
+    return True
+
+
+# 동치 관계 판별 및 동치류 출력 기능
+
+def check_equivalence(R):
+    r = is_reflexive(R)
+    s = is_symmetric(R)
+    t = is_transitive(R)
+
+    print("\n[관계 판별 결과]")
+    print("반사성:", "만족" if r else "불만족")
+    print("대칭성:", "만족" if s else "불만족")
+    print("추이성:", "만족" if t else "불만족")
+
+    if r and s and t:
+        print("=> 이 관계는 동치 관계입니다.")
+        return True
+    else:
+        print("=> 동치 관계가 아닙니다.")
+        return False
+
+
+def print_matrix(R):
+    for row in R:
+        print(" ".join(map(str, row)))
+
+
+def equivalence_class(R, a):
+    eq = []
+    for x in range(N):
+        if R[a][x] == 1:
+            eq.append(x + 1)
+    return eq
+
+
+def print_equivalence_classes(R):
+    print("\n[동치류 출력]")
+    for i in range(N):
+        print(f"[{i+1}] =", equivalence_class(R, i))
+
+
+# 폐포 생성 기능 (반사·대칭·추이)
+
+def reflexive_closure(R):
+    print("\n[반사 폐포 생성]")
+    print("변환 전:")
+    print_matrix(R)
+
+    for i in range(N):
+        R[i][i] = 1
+
+    print("변환 후:")
+    print_matrix(R)
+    return R
+
+
+def symmetric_closure(R):
+    print("\n[대칭 폐포 생성]")
+    print("변환 전:")
+    print_matrix(R)
+
+    for i in range(N):
+        for j in range(N):
+            if R[i][j] == 1:
+                R[j][i] = 1
+
+    print("변환 후:")
+    print_matrix(R)
+    return R
+
+
+def transitive_closure(R):
+    print("\n[추이 폐포 생성]")
+    print("변환 전:")
+    print_matrix(R)
+
+    for k in range(N):
+        for i in range(N):
+            for j in range(N):
+                if R[i][k] == 1 and R[k][j] == 1:
+                    R[i][j] = 1
+
+    print("변환 후:")
+    print_matrix(R)
+    return R
+
+
+# 추가 기능: 관계 그래프 시각화
+
+import matplotlib.pyplot as plt
+import numpy as np
+import math
+
+def draw_relation_graph_show(R):
+    """
+    관계행렬 R(5x5)을 Directed Graph로 화면에 시각화하여 표시하는 함수.
+    """
+    R = np.array(R)
+    size = 5
+    radius = 1.0
+
+    # 원형 배치된 노드 좌표
+    positions = {
+        i: (
+            radius * math.cos(2 * math.pi * i / size - math.pi/2),
+            radius * math.sin(2 * math.pi * i / size - math.pi/2)
+        )
+        for i in range(size)
+    }
+
+    fig, ax = plt.subplots(figsize=(6, 6))
+    ax.set_xlim(-1.5, 1.5)
+    ax.set_ylim(-1.5, 1.5)
+
+    # 간선 그리기
+    for i in range(size):
+        for j in range(size):
+            if R[i][j] == 1:
+                x1, y1 = positions[i]
+                x2, y2 = positions[j]
+                ax.annotate(
+                    "",
+                    xy=(x2, y2),
+                    xytext=(x1, y1),
+                    arrowprops=dict(arrowstyle="->", lw=2)
+                )
+
+    # 노드
+    for i in range(size):
+        x, y = positions[i]
+        ax.plot(x, y, "o", markersize=20)
+        ax.text(x - 0.05, y - 0.05, str(i+1), fontsize=14)
+
+    ax.axis("off")
+    plt.title("Relation Graph (Directed)")
+    plt.show()
+
+
+def main():
+    R = input_matrix()
+
+    print("\n입력된 관계 행렬:")
+    print_matrix(R)
+
+    eq = check_equivalence(R)
+
+    if eq:
+        print_equivalence_classes(R)
+        draw_relation_graph_show(R) 
+        return
+
+    # 동치 관계가 아닐 경우 → 폐포 적용
+    R = reflexive_closure(R)
+    check_equivalence(R)
+
+    R = symmetric_closure(R)
+    check_equivalence(R)
+
+    R = transitive_closure(R)
+    is_eq = check_equivalence(R)
+
+    if is_eq:
+        print_equivalence_classes(R)
+
+    # 최종 그래프 화면 표시
+    draw_relation_graph_show(R)
+
+if __name__ == "__main__":
+    main()
